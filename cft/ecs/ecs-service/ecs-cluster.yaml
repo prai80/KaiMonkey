@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Service with Cluster and Task Definitions
+
+Resources:
+  # Cluster
+  MyCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: MyECSCluster
+      VpcId: !Ref MyVpc  # Replace with your VPC ID
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled  # Set to 'disabled' to disable
+        - Name: executeCommandConfiguration
+          Value: '{"Logging":"ENABLED"}' 
+
+  # Task Definition
+  MyTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: MyTaskDefinition
+      Cpu: '256'
+      Memory: '512'
+      NetworkMode: awsvpc
+      RequiresCompatibilities: ['FARGATE']  # Adjust for launch type
+      ContainerDefinitions:
+        - Name: my-container
+          Image: my-image:latest
+          PortMappings:
+            - ContainerPort: 80
+          Essential: true  # Set to false for non-essential containers
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/services/my-service
+              awslogs-region: !Ref AWS::Region
+
+  # Service
+  MyService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref MyCluster
+      LaunchType: FARGATE  # Adjust for launch type
+      ServiceName: my-service
+      TaskDefinition: !Ref MyTaskDefinition
+      DesiredCount: 2
+      NetworkConfiguration:
+        awsvpcConfiguration:
+          SecurityGroups: [!Ref MySecurityGroup]
+          Subnets: [!Ref MyPublicSubnet1, !Ref MyPublicSubnet2]
+      LoadBalancers:
+        - TargetGroupArn: !Ref MyTargetGroup
+          ContainerName: my-container
+          ContainerPort: 80
+
+  # Load Balancer (Optional)
+  MyTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      TargetType: instance
+      VpcId: !Ref MyVpc
+
+Outputs:
+  ClusterName:
+    Value: !Ref MyCluster
+  ServiceName:
+    Value: !Ref MyService
+  LoadBalancerDNSName:
+    Value: !GetAtt MyLoadBalancer.DNSName  # If Load Balancer is included
