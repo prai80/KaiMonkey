@@ -8,12 +8,28 @@ Resources:
     Properties:
       ClusterName: MyECSCluster
       VpcId: !Ref MyVpc  # Replace with your VPC ID
+       # Additional properties:
+      CapacityProviders:  # List of capacity providers to associate with the cluster
+        - "FARGATE"  # Example capacity provider (replace with appropriate provider)
+      Configuration:
+        ClusterConfiguration:
+          # Customize ClusterConfiguration properties as needed
+      DefaultCapacityProviderStrategy:
+        - CapacityProviderStrategyItem:
+            Base: 0.2  # Adjust base value as needed
+            Weight: 1  # Adjust weight value as needed
+      ServiceConnectDefaults:
+        # Customize ServiceConnectDefaults properties as needed
       ClusterSettings:
         - Name: containerInsights
-          Value: enabled  # Set to 'disabled' to disable
+          Value: enabled
         - Name: executeCommandConfiguration
-          Value: '{"Logging":"ENABLED"}' 
-
+          Value: '{"Logging":"ENABLED"}'
+        - Name: serviceLongRunningTaskExecRoleArn
+          Value: !GetAtt MyExecutionRole.Arn  # Replace with IAM role ARN
+      Tags:
+        - Key: Name
+          Value: MyECSCluster
   # Task Definition
   MyTaskDefinition:
     Type: AWS::ECS::TaskDefinition
