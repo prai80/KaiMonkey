@@ -6,3 +6,4 @@ Resources:
       VpcId: test-vpc-sp
       AvailabilityZone: "us-east-1a"
       CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: true
